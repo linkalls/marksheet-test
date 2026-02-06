@@ -9,7 +9,7 @@ A powerful, AI-driven mobile application for creating, distributing, and grading
   - Handles complex question formats (e.g., "A to D", "1~5").
 - **📄 PDF Export**: Generate printable marksheet PDFs directly from the app.
 - **📷 AI Vision Grader**: Scan filled answer sheets with your camera or imports to grade them instantly.
-- **⚙️ Customizable Settings**: Manage your OpenAI API Key, Model (e.g., `gpt-5-mini`), and Debug Mode securely.
+- **⚙️ Customizable Settings**: Manage your OpenAI API Key, Model (e.g., `gpt-5-mini-2025-08-07`), and Debug Mode securely.
 - **💾 Local Persistence**: Auto-save your exam drafts and grading history.
 
 ## 🚀 Quick Start

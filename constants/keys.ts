@@ -5,6 +5,6 @@ export const STORAGE_KEYS = {
 };
 
 export const DEFAULT_SETTINGS = {
-  MODEL_NAME: "gpt-4o",
+  MODEL_NAME: "gpt-5-mini-2025-08-07",
   DEBUG_MODE: false,
 };

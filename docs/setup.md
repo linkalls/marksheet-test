@@ -31,7 +31,7 @@ You can configure the API Key directly inside the app:
 1. Open the app.
 2. Go to the **Settings** tab (Gear icon).
 3. Enter your API Key in the "OpenAI API Key" field.
-4. (Optional) Set a Model Name (default config uses `gpt-4o-mini` or similar if not specified, but `gpt-4o` is recommended for high accuracy).
+4. (Optional) Set a Model Name (default config uses `gpt-5-mini-2025-08-07` or similar if not specified).
 5. Tap **Save Settings**.
 
 The key is stored securely on your device using `expo-secure-store`.
