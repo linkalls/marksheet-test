@@ -147,10 +147,10 @@ export default function SettingsScreen() {
                 value={modelInput}
                 onChangeText={setModelInput}
                 onBlur={handleSaveModel}
-                placeholder="gpt-4o"
+                placeholder="gpt-5-mini-2025-08-07"
                 autoCapitalize="none"
               />
-              <Text style={styles.hint}>Example: gpt-4o, gpt-4-turbo, gpt-3.5-turbo</Text>
+              <Text style={styles.hint}>Example: gpt-5-mini-2025-08-07, gpt-4o, gpt-4-turbo</Text>
             </View>
 
           </View>

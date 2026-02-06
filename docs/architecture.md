@@ -4,7 +4,7 @@
 
 - **Framework**: [Expo](https://expo.dev/) (React Native)
 - **Routing**: [Expo Router](https://docs.expo.dev/router/introduction/) (File-based routing)
-- **AI / ML**: [OpenAI API](https://platform.openai.com/) (GPT-5-mini ) for layout parsing and grading.
+- **AI / ML**: [OpenAI API](https://platform.openai.com/) (GPT-5-mini-2025-08-07) for layout parsing and grading.
 - **Storage**:
   - `expo-secure-store`: Encrypted storage for API Keys.
   - `@react-native-async-storage`: JSON storage for exam drafts and settings.

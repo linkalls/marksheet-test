@@ -44,5 +44,5 @@ The **Grader** tab allows you to score filled answer sheets using AI Vision.
 ## ⚙️ Settings
 
 - **API Key**: Manage your OpenAI key safely.
-- **Model**: Switch models (e.g., `gpt-4o`, `gpt-4o-mini`).
+- **Model**: Switch models (e.g., `gpt-5-mini-2025-08-07`, `gpt-4o`).
 - **Debug Mode**: Enable verify detailed logs for troubleshooting.
