@@ -31,15 +31,18 @@ interface GradeRow {
 }
 
 export default function GraderScreen() {
-  const { config, loadSavedExam, savedExams } = useExam();
+  const { config, savedExams, gradingConfig, loadExamForGrading, clearGradingConfig } = useExam();
+  // If a specific exam is loaded for grading, use it. Otherwise fallback to the current maker config.
+  const targetConfig = gradingConfig ?? config;
+
   const [answerSheetFile, setAnswerSheetFile] = useState<LocalInputFile | null>(null);
   const [grading, setGrading] = useState(false);
   const [rows, setRows] = useState<GradeRow[]>([]);
   const [isSelectorVisible, setSelectorVisible] = useState(false);
 
   const maxPoints = useMemo(
-    () => config.questions.filter((q) => q.type === 'mark').reduce((sum, q) => sum + q.points, 0),
-    [config.questions]
+    () => targetConfig.questions.filter((q) => q.type === 'mark').reduce((sum, q) => sum + q.points, 0),
+    [targetConfig.questions]
   );
 
   const total = useMemo(() => rows.reduce((sum, row) => sum + row.points, 0), [rows]);
@@ -71,8 +74,9 @@ export default function GraderScreen() {
 
     try {
       setGrading(true);
-      const detected = await gradeByVisionFromFile(answerSheetFile, config);
-      const markQuestions = config.questions.filter((q) => q.type === 'mark');
+      setGrading(true);
+      const detected = await gradeByVisionFromFile(answerSheetFile, targetConfig);
+      const markQuestions = targetConfig.questions.filter((q) => q.type === 'mark');
 
       const mapped: GradeRow[] = markQuestions.map((q) => {
         const found = detected.find((d) => d.id === q.id);
@@ -139,7 +143,7 @@ export default function GraderScreen() {
         if (row.id !== id) return row;
         // Re-evaluate logic
         // Find original question to get detected correct option... wait, correct option is in config
-        const question = config.questions.find((q) => q.id === id);
+        const question = targetConfig.questions.find((q) => q.id === id);
         const correctOption = question?.type === 'mark' ? question.correctOption : null;
         const isCorrect = filled === correctOption;
         
@@ -194,13 +198,13 @@ export default function GraderScreen() {
         >
           <View style={styles.examSelectorContent}>
             <View>
-              <Text style={styles.examSelectorLabel}>Current Exam</Text>
+              <Text style={styles.examSelectorLabel}>Current Exam {gradingConfig ? '(Saved)' : '(Draft)'}</Text>
               <Text style={styles.examSelectorTitle} numberOfLines={1}>
-                {config.questions.length > 0 ? config.title : 'No Exam Selected'}
+                {targetConfig.questions.length > 0 ? targetConfig.title : 'No Exam Selected'}
               </Text>
               <Text style={styles.examSelectorMeta}>
-                {config.questions.length > 0 
-                  ? `${config.questions.filter(q => q.type === 'mark').length} mark questions`
+                {targetConfig.questions.length > 0 
+                  ? `${targetConfig.questions.filter(q => q.type === 'mark').length} mark questions`
                   : 'Tap to select an exam'
                 }
               </Text>
@@ -226,6 +230,25 @@ export default function GraderScreen() {
               </Pressable>
             </View>
             <ScrollView contentContainerStyle={styles.modalContent}>
+              {/* Option to use current Maker draft */}
+              <Pressable
+                style={[
+                   styles.modalItem,
+                   !gradingConfig && styles.modalItemActive
+                ]}
+                onPress={() => {
+                   clearGradingConfig();
+                   setSelectorVisible(false);
+                   Haptics.selectionAsync();
+                }}
+              >
+                 <View style={styles.modalItemInfo}>
+                    <Text style={styles.modalItemTitle}>📝 Current Maker Draft</Text>
+                    <Text style={styles.modalItemMeta}>Use the exam currently being edited</Text>
+                 </View>
+                 {!gradingConfig && <Text style={styles.checkIcon}>✓</Text>}
+              </Pressable>
+
               {savedExams.length === 0 ? (
                 <View style={styles.emptyListState}>
                   <Text style={styles.emptyListIcon}>📭</Text>
@@ -238,12 +261,17 @@ export default function GraderScreen() {
                     key={saved.id}
                     style={[
                       styles.modalItem,
-                      config.title === saved.config.title && config.questions.length === saved.config.questions.length && styles.modalItemActive
+                      gradingConfig?.title === saved.config.title && gradingConfig?.questions.length === saved.config.questions.length && styles.modalItemActive
                     ]}
                     onPress={() => {
-                      loadSavedExam(saved.id);
+                      loadExamForGrading(saved.id);
                       setSelectorVisible(false);
-                      Haptics.selectionAsync();
+                      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                      Burnt.toast({
+                        title: '✅ Exam Loaded',
+                        message: `Ready to grade: ${saved.config.title}`,
+                        preset: 'done', 
+                      });
                     }}
                   >
                     <View style={styles.modalItemInfo}>
@@ -252,7 +280,7 @@ export default function GraderScreen() {
                         {saved.config.questions.length} questions • {new Date(saved.updatedAt).toLocaleDateString()}
                       </Text>
                     </View>
-                    {config.title === saved.config.title && config.questions.length === saved.config.questions.length && (
+                    {gradingConfig?.title === saved.config.title && gradingConfig?.questions.length === saved.config.questions.length && (
                       <Text style={styles.checkIcon}>✓</Text>
                     )}
                   </Pressable>
@@ -262,7 +290,35 @@ export default function GraderScreen() {
           </View>
         </Modal>
 
-        {/* File Picker Card */}
+        {/* Current Exam Card (Hidden in favor of Selector, but keeping structure if needed or removing) */}
+        {/* We replaced the static card with the pressable selector above, so we can remove the old card code from here if it still exists. 
+            The previous edit replaced the 'Current Exam Card' block with 'Exam Selector Trigger'.
+            So wait, line 252 in original file was inside 'Saved Exams Selector' loop or logic? 
+            Looking at original file structure...
+            The previous tool call replaced lines 189-224 (Current Exam Card + Saved Exams Selector) with the Selector Trigger + Modal.
+            So 'Saved Exams Selector' and 'Current Exam Card' are effectively GONE and replaced. 
+            However, I see I am targeting line 252? Let's check the context again. 
+            
+            Ah, I see 'Current Exam Info' usages in my ReplacementChunks. 
+            
+            Wait, I just need to make sure I updated all references to 'config' to 'targetConfig'.
+            
+            Let's check 'Current Exam Title' display in the replacement 4 (lines 192-208 in my chunk logic).
+            
+            Visual Check:
+            - Replaced 'config.title' with 'targetConfig.title' in selector display. (Chunk 4) 👍
+            
+            Chunk 1: imports - Done
+            Chunk 2: Hook usage - Done
+            Chunk 3: maxPoints - Done
+            Chunk 4: runGrading - Done
+            Chunk 5: applyCorrection - Done
+            Chunk 6: Exam Selector Display - Done
+            Chunk 7: Modal Content (Add Draft option) - Done
+            Chunk 8: Modal Item (Update onPress and active check) - Done
+            
+            I think that covers it.
+        */}
         <View style={styles.glassCard}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardIcon}>📷</Text>
@@ -466,6 +522,7 @@ const styles = StyleSheet.create({
     ...Typography.h3,
     color: Palette.primary.solid,
     marginBottom: 2,
+    flexShrink: 1,
   },
   examSelectorMeta: {
     ...Typography.small,
@@ -527,11 +584,13 @@ const styles = StyleSheet.create({
   },
   modalItemInfo: {
     flex: 1,
+    marginRight: Spacing.sm,
   },
   modalItemTitle: {
     ...Typography.bodyBold,
     fontSize: 16,
     marginBottom: 4,
+    flexShrink: 1,
   },
   modalItemMeta: {
     ...Typography.small,

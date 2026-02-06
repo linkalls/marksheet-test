@@ -1,50 +1,40 @@
-# Welcome to your Expo app 👋
+# Marksheet Expo App 📱
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A powerful, AI-driven mobile application for creating, distributing, and grading marksheet exams. Built with React Native, Expo, and OpenAI.
 
-## Get started
+## ✨ Features
 
-1. Install dependencies
+- **🤖 AI Exam Maker**: Generate exam configurations instantly from PDFs or images using OpenAI Vision.
+  - Supports simultaneous "Question" and "Answer Key" upload for auto-correction setup.
+  - Handles complex question formats (e.g., "A to D", "1~5").
+- **📄 PDF Export**: Generate printable marksheet PDFs directly from the app.
+- **📷 AI Vision Grader**: Scan filled answer sheets with your camera or imports to grade them instantly.
+- **⚙️ Customizable Settings**: Manage your OpenAI API Key, Model (e.g., `gpt-5-mini`), and Debug Mode securely.
+- **💾 Local Persistence**: Auto-save your exam drafts and grading history.
+
+## 🚀 Quick Start
+
+1. **Install Dependencies**:
 
    ```bash
-   npm install
+   bun install
    ```
 
-2. Start the app
+2. **Configure Settings**:
+   - The app uses OpenAI for vision tasks.
+   - You can set your API Key in the **Settings** tab within the app, or use an environment variable `.env` file (see `docs/setup.md`).
 
+3. **Run the App**:
    ```bash
-   npx expo start
+   bun start
    ```
 
-In the output, you'll find options to open the app in a
+## 📚 Documentation
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- [**Setup Guide**](./docs/setup.md): Installation and API configuration.
+- [**Usage Guide**](./docs/usage.md): How to use Maker and Grader tools.
+- [**Architecture**](./docs/architecture.md): Tech stack and project structure.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Built with Expo Router, NativeWind (concepts), and OpenAI.

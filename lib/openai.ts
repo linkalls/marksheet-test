@@ -307,7 +307,7 @@ export async function generateExamConfigFromImageUrl(
   imageUrl: string,
   answerImageUrl?: string,
 ): Promise<ExamConfig> {
-  const content = [
+  const content: any[] = [
     {
       role: "user",
       content: [

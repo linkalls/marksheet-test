@@ -7,6 +7,7 @@ import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,7 +17,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useExam } from '@/context/exam-context';
+import { useExam, type SavedExam } from '@/context/exam-context';
 import {
   generateExamConfigFromFile,
   gradeByVisionFromFile,
@@ -47,6 +48,7 @@ export default function MakerScreen() {
   const [isExporting, setIsExporting] = useState(false);
   const [optionCountDrafts, setOptionCountDrafts] = useState<Record<string, string>>({});
   const [selectedSavedId, setSelectedSavedId] = useState<string | null>(null);
+  const [previewExam, setPreviewExam] = useState<SavedExam | null>(null);
 
   const markTotal = useMemo(
     () => config.questions.filter((q) => q.type === 'mark').reduce((sum, q) => sum + q.points, 0),
@@ -465,18 +467,25 @@ export default function MakerScreen() {
           </Pressable>
           
           <Pressable 
-            style={[styles.actionButton, styles.exportButton]} 
+            style={[styles.gradientButtonWrapper, { flex: 1 }]} 
             onPress={exportPdf} 
             disabled={isExporting}
           >
-            {isExporting ? (
-              <ActivityIndicator color={Palette.primary.solid} size="small" />
-            ) : (
-              <>
-                <Text style={styles.actionButtonIcon}>📤</Text>
-                <Text style={[styles.actionButtonText, styles.exportButtonText]}>Export PDF</Text>
-              </>
-            )}
+            <LinearGradient
+               colors={isExporting ? [Palette.neutral[400], Palette.neutral[500]] : ['#f59e0b', '#d97706']}
+               start={{ x: 0, y: 0 }}
+               end={{ x: 1, y: 0 }}
+               style={styles.gradientButton}
+            >
+              {isExporting ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <>
+                  <Text style={styles.actionButtonIcon}>📤</Text>
+                  <Text style={styles.gradientButtonText}>Export PDF</Text>
+                </>
+              )}
+            </LinearGradient>
           </Pressable>
         </View>
 
@@ -486,6 +495,13 @@ export default function MakerScreen() {
             <View style={styles.cardHeader}>
               <Text style={styles.cardIcon}>📚</Text>
               <Text style={styles.cardTitle}>Saved Exams</Text>
+              <View style={{ flex: 1 }} />
+              <Pressable 
+                onPress={handleNewExam}
+                style={styles.miniNewButton}
+              >
+                <Text style={styles.miniNewButtonText}>+ New</Text>
+              </Pressable>
             </View>
             {savedExams.map((saved) => (
               <View key={saved.id} style={styles.savedExamRow}>
@@ -494,21 +510,30 @@ export default function MakerScreen() {
                     styles.savedExamItem,
                     selectedSavedId === saved.id && styles.savedExamItemActive
                   ]}
-                  onPress={() => {
-                    loadSavedExam(saved.id);
-                    setSelectedSavedId(saved.id);
-                  }}
+                  onPress={() => setPreviewExam(saved)}
                 >
-                  <Text style={styles.savedExamTitle} numberOfLines={1}>
-                    {saved.config.title}
-                  </Text>
-                  <Text style={styles.savedExamMeta}>
-                    {saved.config.questions.length} questions • {new Date(saved.updatedAt).toLocaleDateString()}
-                  </Text>
+                  <View style={styles.savedExamTextContainer}>
+                    <Text style={styles.savedExamTitle} numberOfLines={1}>
+                      {saved.config.title}
+                    </Text>
+                    <Text style={styles.savedExamMeta}>
+                      {saved.config.questions.length} questions • {new Date(saved.updatedAt).toLocaleDateString()}
+                    </Text>
+                  </View>
                 </Pressable>
                 <Pressable 
                   style={styles.deleteButton} 
-                  onPress={() => void deleteSavedExam(saved.id)}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    Alert.alert('Delete Exam', 'Are you sure?', [
+                      { text: 'Cancel', style: 'cancel' },
+                      { 
+                        text: 'Delete', 
+                        style: 'destructive', 
+                        onPress: () => deleteSavedExam(saved.id) 
+                      }
+                    ]);
+                  }}
                 >
                   <Text style={styles.deleteButtonText}>🗑️</Text>
                 </Pressable>
@@ -516,6 +541,73 @@ export default function MakerScreen() {
             ))}
           </View>
         )}
+
+        {/* Saved Exam Preview Modal */}
+        <Modal
+          visible={!!previewExam}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setPreviewExam(null)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.cardIcon}>📄</Text>
+                <Text style={styles.modalTitle} numberOfLines={1}>{previewExam?.config.title}</Text>
+              </View>
+              
+              <View style={styles.modalBody}>
+                <View style={styles.modalStatRow}>
+                  <View style={styles.modalStat}>
+                     <Text style={styles.modalStatValue}>{previewExam?.config.questions.length}</Text>
+                     <Text style={styles.modalStatLabel}>Questions</Text>
+                  </View>
+                  <View style={styles.modalStat}>
+                     <Text style={styles.modalStatValue}>
+                       {(previewExam?.config.questions ?? []).filter(q => q.type === 'mark').reduce((s, q) => s + q.points, 0) + 
+                        (previewExam?.config.questions ?? []).filter(q => q.type === 'text').reduce((s, q) => s + q.points, 0)}
+                     </Text>
+                     <Text style={styles.modalStatLabel}>Points</Text>
+                  </View>
+                  <View style={styles.modalStat}>
+                     <Text style={styles.modalStatValue}>
+                        DATE
+                     </Text>
+                     <Text style={styles.modalStatLabel}>
+                       {previewExam && new Date(previewExam.updatedAt).toLocaleDateString()}
+                     </Text>
+                  </View>
+                </View>
+                
+                <Text style={styles.modalDescription}>
+                   Do you want to load this exam for editing? Current unsaved changes on the canvas will be overwritten (unless saved).
+                </Text>
+              </View>
+
+              <View style={styles.modalActions}>
+                <Pressable 
+                   style={[styles.modalButton, styles.modalButtonSecondary]}
+                   onPress={() => setPreviewExam(null)}
+                >
+                   <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
+                </Pressable>
+                <Pressable 
+                   style={[styles.modalButton, styles.modalButtonPrimary]}
+                   onPress={() => {
+                     if (previewExam) {
+                        loadSavedExam(previewExam.id);
+                        setSelectedSavedId(previewExam.id);
+                        setPreviewExam(null);
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                     }
+                   }}
+                >
+                   <Text style={styles.modalButtonTextPrimary}>Load to Edit</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
 
         {/* Questions List */}
         {config.questions.map((q, index) => (
@@ -869,6 +961,12 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     borderWidth: 1,
     borderColor: 'transparent',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  savedExamTextContainer: {
+    flex: 1,
+    marginRight: Spacing.sm,
   },
   savedExamItemActive: {
     backgroundColor: Palette.primary.light + '20',
@@ -877,10 +975,98 @@ const styles = StyleSheet.create({
   savedExamTitle: {
     ...Typography.bodyBold,
     color: Palette.neutral[900],
+    flexShrink: 1,
   },
   savedExamMeta: {
     ...Typography.small,
     color: Palette.neutral[500],
+  },
+  miniNewButton: {
+    backgroundColor: Palette.primary.light + '20',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+  },
+  miniNewButtonText: {
+    ...Typography.caption,
+    color: Palette.primary.dark,
+    fontWeight: '700',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: Spacing.lg,
+  },
+  modalCard: {
+    backgroundColor: '#fff',
+    borderRadius: Radius.xl,
+    padding: Spacing.xl,
+    ...Shadows.lg,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  modalTitle: {
+    ...Typography.h3,
+    flex: 1,
+  },
+  modalBody: {
+    marginBottom: Spacing.xl,
+  },
+  modalStatRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.lg,
+    backgroundColor: Palette.neutral[50],
+    padding: Spacing.md,
+    borderRadius: Radius.lg,
+  },
+  modalStat: {
+    alignItems: 'center',
+  },
+  modalStatValue: {
+    ...Typography.h3,
+    color: Palette.primary.solid,
+  },
+  modalStatLabel: {
+    ...Typography.caption,
+    color: Palette.neutral[500],
+    fontSize: 10,
+    textTransform: 'uppercase',
+  },
+  modalDescription: {
+    ...Typography.body,
+    color: Palette.neutral[600],
+    lineHeight: 20,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalButtonSecondary: {
+    backgroundColor: Palette.neutral[100],
+  },
+  modalButtonPrimary: {
+    backgroundColor: Palette.primary.solid,
+  },
+  modalButtonTextSecondary: {
+    ...Typography.bodyBold,
+    color: Palette.neutral[700],
+  },
+  modalButtonTextPrimary: {
+    ...Typography.bodyBold,
+    color: '#fff',
   },
   deleteButton: {
     backgroundColor: Palette.error.bg,
