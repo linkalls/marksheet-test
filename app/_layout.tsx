@@ -6,6 +6,7 @@ import 'react-native-reanimated';
 import { ExamProvider } from '@/context/exam-context';
 import { SettingsProvider } from '@/context/settings-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { DebugConsole } from '@/components/debug-console';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -23,6 +24,7 @@ export default function RootLayout() {
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         </Stack>
         <StatusBar style="auto" />
+        <DebugConsole />
       </ThemeProvider>
     </ExamProvider>
     </SettingsProvider>

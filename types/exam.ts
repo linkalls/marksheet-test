@@ -9,7 +9,7 @@ export interface Question {
   type: QuestionType;
   optionsCount?: number;
   optionStyle?: OptionStyle;
-  correctOption?: number | null;
+  correctOptions?: number[]; // Changed from correctOption: number | null
   boxHeight?: TextBoxHeight;
 }
 
@@ -28,7 +28,7 @@ export const DEFAULT_EXAM_CONFIG: ExamConfig = {
       type: 'mark',
       optionsCount: 4,
       optionStyle: 'alphabet',
-      correctOption: 0,
+      correctOptions: [0],
     },
     {
       id: 'q2',
@@ -37,7 +37,7 @@ export const DEFAULT_EXAM_CONFIG: ExamConfig = {
       type: 'mark',
       optionsCount: 4,
       optionStyle: 'alphabet',
-      correctOption: 2,
+      correctOptions: [2],
     },
     {
       id: 'q3',

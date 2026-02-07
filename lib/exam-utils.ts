@@ -40,12 +40,25 @@ export function normalizeQuestion(q: Question, index: number): Question {
       ? (q.optionStyle as OptionStyle)
       : "alphabet";
 
-    const rawCorrect =
-      typeof q.correctOption === "number" ? q.correctOption : null;
-    const correctOption =
-      rawCorrect != null && rawCorrect >= 0 && rawCorrect < optionsCount
-        ? rawCorrect
-        : null;
+    // Migrate old correctOption to correctOptions if needed (though TS might complain if we don't cast)
+    // The type definition expects correctOptions.
+    // If we are normalizing an old object that might still have correctOption (at runtime), we should handle it.
+    let correctOptions: number[] = [];
+
+    // @ts-ignore: handling migration
+    if (typeof q.correctOption === 'number') {
+       // @ts-ignore
+       correctOptions = [q.correctOption];
+    } else if (Array.isArray(q.correctOptions)) {
+       correctOptions = q.correctOptions;
+    }
+
+    // Filter valid indices
+    correctOptions = correctOptions
+       .filter((idx) => typeof idx === 'number' && idx >= 0 && idx < optionsCount)
+       // sort and unique
+       .sort((a, b) => a - b)
+       .filter((val, i, arr) => arr.indexOf(val) === i);
 
     return {
       ...q,
@@ -55,7 +68,10 @@ export function normalizeQuestion(q: Question, index: number): Question {
       type: "mark",
       optionsCount,
       optionStyle,
-      correctOption,
+      correctOptions,
+      // Remove legacy field if it exists in the object spread
+      // @ts-ignore
+      correctOption: undefined,
     };
   }
 
