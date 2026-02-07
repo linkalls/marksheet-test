@@ -14,6 +14,7 @@ import { z } from "zod";
 import * as SecureStore from "expo-secure-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { STORAGE_KEYS, DEFAULT_SETTINGS } from "@/constants/keys";
+import { logger } from "@/lib/logger";
 
 // --- Configuration Helper ---
 
@@ -70,7 +71,7 @@ const markQuestionSchema = z.object({
   type: z.literal("mark"),
   optionsCount: z.number().int().min(2).max(10).default(4),
   optionStyle: optionStyleSchema.default("alphabet"),
-  correctOption: z.number().int().min(0).nullable().default(null),
+  correctOptions: z.array(z.number().int().min(0)).default([]),
 });
 
 const textQuestionSchema = z.object({
@@ -92,7 +93,7 @@ const examConfigSchema = z.object({
         type: questionTypeSchema,
         optionsCount: z.number().int().min(2).max(10).nullable(),
         optionStyle: optionStyleSchema.nullable(),
-        correctOption: z.number().int().min(0).nullable(),
+        correctOptions: z.array(z.number().int().min(0)).nullable(),
         boxHeight: textBoxHeightSchema.nullable(),
       }),
     )
@@ -103,14 +104,14 @@ const visionGradeSchema = z.object({
   results: z.array(
     z.object({
       id: z.string().min(1),
-      filled: z.number().int().min(0).nullable(),
+      filled: z.array(z.number().int().min(0)).nullable(),
     }),
   ),
 });
 
 export interface VisionGradeResult {
   id: string;
-  filled: number | null;
+  filled: number[] | null;
 }
 
 export interface LocalInputFile {
@@ -129,6 +130,8 @@ async function logDebug(message: string, data?: any) {
         `[DEBUG] ${message}`,
         data !== undefined ? JSON.stringify(data, null, 2) : "",
       );
+      // Also send to in-app logger if available
+      logger.addLog(message, data);
     }
   } catch {}
 }
@@ -257,7 +260,7 @@ function toExamConfig(value: z.infer<typeof examConfigSchema>): ExamConfig {
           type: questionTypeSchema.parse(question.type),
           optionsCount: question.optionsCount ?? 4,
           optionStyle: question.optionStyle ?? "alphabet",
-          correctOption: question.correctOption ?? null,
+          correctOptions: question.correctOptions ?? [],
         };
       }
       return {
@@ -283,10 +286,11 @@ const COMMON_INSTRUCTIONS = [
   "3. EXPAND RANGES: 'イ～ニ' becomes questions for イ, ロ, ハ, ニ. '1～3' becomes questions 1, 2, 3.",
   "4. Use labels like '1-イ', '1-ロ' or '問1(1)', '問1(2)' for sub-questions.",
   "5. Never combine multiple answer bubbles into one question.",
-  "6. If an Answer Key source is provided, use it to populate 'correctOption'. Otherwise leave correctOption as null.",
+  "6. If an Answer Key source is provided, use it to populate 'correctOptions'. It is an array of 0-based indices.",
+  "7. If multiple answers are correct, include all of them in 'correctOptions'.",
   "",
   'Question type must be "mark" (multiple choice) or "text" (written answer).',
-  "For mark questions include optionsCount, optionStyle, and correctOption (0-based index or null).",
+  "For mark questions include optionsCount, optionStyle, and correctOptions (array of 0-based indices).",
   'For text questions include boxHeight ("small" | "medium" | "large").',
   "Set stable unique IDs (q1, q1a, q1b, etc.) for each question.",
 ].join("\n");
@@ -404,8 +408,8 @@ export async function gradeByVision(
     "vision_grade_results",
     [
       "You are a marksheet grader.",
-      'Return only a JSON array of { "id": string, "filled": number | null }.',
-      "filled must be the 0-based selected option index, or null when unclear.",
+      'Return only a JSON array of { "id": string, "filled": number[] | null }.',
+      "filled must be an array of ALL 0-based selected option indices. If nothing is selected, return null or empty array.",
       "Do not return IDs that are not in the provided schema.",
     ].join("\n"),
     [
@@ -439,8 +443,9 @@ export async function gradeByVision(
         return null;
       }
       const max = optionsCount - 1;
-      const filled =
-        item.filled !== null && item.filled <= max ? item.filled : null;
+      // Filter out invalid indices
+      const validFilled = item.filled?.filter((idx) => idx >= 0 && idx <= max) ?? [];
+      const filled = validFilled.length > 0 ? validFilled : null;
       return { id: item.id, filled };
     })
     .filter((item): item is VisionGradeResult => item !== null);
@@ -468,8 +473,8 @@ export async function gradeByVisionFromFile(
     "vision_grade_results",
     [
       "You are a marksheet grader.",
-      'Return only a JSON array of { "id": string, "filled": number | null }.',
-      "filled must be the 0-based selected option index, or null when unclear.",
+      'Return only a JSON array of { "id": string, "filled": number[] | null }.',
+      "filled must be an array of ALL 0-based selected option indices. If nothing is selected, return null or empty array.",
       "Do not return IDs that are not in the provided schema.",
     ].join("\n"),
     [
@@ -499,8 +504,9 @@ export async function gradeByVisionFromFile(
         return null;
       }
       const max = optionsCount - 1;
-      const filled =
-        item.filled !== null && item.filled <= max ? item.filled : null;
+      // Filter out invalid indices
+      const validFilled = item.filled?.filter((idx) => idx >= 0 && idx <= max) ?? [];
+      const filled = validFilled.length > 0 ? validFilled : null;
       return { id: item.id, filled };
     })
     .filter((item): item is VisionGradeResult => item !== null);

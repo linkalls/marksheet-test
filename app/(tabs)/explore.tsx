@@ -19,15 +19,26 @@ import { useExam } from '@/context/exam-context';
 import { gradeByVisionFromFile, type LocalInputFile } from '@/lib/openai';
 import { getOptionLabel } from '@/lib/exam-utils';
 import { Palette, Shadows, Radius, Typography, Spacing } from '@/constants/theme';
+import type { OptionStyle } from '@/types/exam';
 
 interface GradeRow {
   id: string;
   label: string;
-  filled: number | null;
+  filled: number[] | null;
   correct: boolean;
   points: number;
   optionsCount: number;
   optionStyle: string;
+}
+
+function areArraysEqual(a: number[] | null, b: number[] | null): boolean {
+  // Treat null as empty array for comparison
+  const arrA = a || [];
+  const arrB = b || [];
+  if (arrA.length !== arrB.length) return false;
+  const sortedA = [...arrA].sort((x, y) => x - y);
+  const sortedB = [...arrB].sort((x, y) => x - y);
+  return sortedA.every((val, index) => val === sortedB[index]);
 }
 
 export default function GraderScreen() {
@@ -39,6 +50,7 @@ export default function GraderScreen() {
   const [grading, setGrading] = useState(false);
   const [rows, setRows] = useState<GradeRow[]>([]);
   const [isSelectorVisible, setSelectorVisible] = useState(false);
+  const [correctionRow, setCorrectionRow] = useState<GradeRow | null>(null);
 
   const maxPoints = useMemo(
     () => targetConfig.questions.filter((q) => q.type === 'mark').reduce((sum, q) => sum + q.points, 0),
@@ -74,14 +86,13 @@ export default function GraderScreen() {
 
     try {
       setGrading(true);
-      setGrading(true);
       const detected = await gradeByVisionFromFile(answerSheetFile, targetConfig);
       const markQuestions = targetConfig.questions.filter((q) => q.type === 'mark');
 
       const mapped: GradeRow[] = markQuestions.map((q) => {
         const found = detected.find((d) => d.id === q.id);
         const filled = found?.filled ?? null;
-        const correct = filled === (q.correctOption ?? null);
+        const correct = areArraysEqual(filled, q.correctOptions ?? []);
         return {
           id: q.id,
           label: q.label,
@@ -113,49 +124,59 @@ export default function GraderScreen() {
   };
 
   const handleManualCorrection = (row: GradeRow) => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    const options = Array.from({ length: row.optionsCount }).map((_, i) => ({
-      text: getOptionLabel(row.optionStyle as any, i),
-      onPress: () => applyCorrection(row.id, i),
-    }));
-
-    options.push({
-      text: 'Clear / Not Detected',
-      onPress: () => applyCorrection(row.id, null),
-    });
-
-    options.push({
-      text: 'Cancel',
-      onPress: () => {},
-      style: 'cancel',
-    } as any);
-
-    Alert.alert(
-      `Correct Question ${row.label}`,
-      'Select the actual marked option:',
-      options
-    );
+    Haptics.selectionAsync();
+    setCorrectionRow(row);
   };
 
-  const applyCorrection = (id: string, filled: number | null) => {
+  const toggleCorrection = (id: string, index: number) => {
+      // Find the row from state to get latest value
+      const row = rows.find(r => r.id === id);
+      if (!row) return;
+
+      const current = row.filled || [];
+      let next: number[];
+      if (current.includes(index)) {
+          next = current.filter(x => x !== index);
+      } else {
+          next = [...current, index].sort((a,b) => a-b);
+      }
+      applyCorrection(id, next);
+  };
+
+  const applyCorrection = (id: string, filled: number[] | null) => {
+    // If empty array, treat as empty array (which areArraysEqual handles as match for [] or null)
+    // But conceptually null means "no detection run" or "ambiguous"?
+    // Here we toggle specific options, so [] is appropriate if user clears all.
+    const finalFilled = filled;
+
     setRows((prev) =>
       prev.map((row) => {
         if (row.id !== id) return row;
-        // Re-evaluate logic
-        // Find original question to get detected correct option... wait, correct option is in config
+
         const question = targetConfig.questions.find((q) => q.id === id);
-        const correctOption = question?.type === 'mark' ? question.correctOption : null;
-        const isCorrect = filled === correctOption;
+        // Correct check
+        const isCorrect = areArraysEqual(finalFilled, question?.type === 'mark' ? (question.correctOptions ?? []) : []);
         
-        return {
+        const newRow = {
           ...row,
-          filled,
+          filled: finalFilled,
           correct: isCorrect,
           points: isCorrect ? (question?.points || 0) : 0,
         };
+
+        // Update the currently open correction modal row as well if it matches
+        if (correctionRow?.id === id) {
+             setCorrectionRow(newRow);
+        }
+        return newRow;
       })
     );
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Haptics.selectionAsync();
+  };
+
+  const formatFilled = (row: GradeRow) => {
+      if (!row.filled || row.filled.length === 0) return 'None';
+      return row.filled.map(i => getOptionLabel(row.optionStyle as OptionStyle, i)).join(', ');
   };
 
   return (
@@ -290,35 +311,53 @@ export default function GraderScreen() {
           </View>
         </Modal>
 
-        {/* Current Exam Card (Hidden in favor of Selector, but keeping structure if needed or removing) */}
-        {/* We replaced the static card with the pressable selector above, so we can remove the old card code from here if it still exists. 
-            The previous edit replaced the 'Current Exam Card' block with 'Exam Selector Trigger'.
-            So wait, line 252 in original file was inside 'Saved Exams Selector' loop or logic? 
-            Looking at original file structure...
-            The previous tool call replaced lines 189-224 (Current Exam Card + Saved Exams Selector) with the Selector Trigger + Modal.
-            So 'Saved Exams Selector' and 'Current Exam Card' are effectively GONE and replaced. 
-            However, I see I am targeting line 252? Let's check the context again. 
-            
-            Ah, I see 'Current Exam Info' usages in my ReplacementChunks. 
-            
-            Wait, I just need to make sure I updated all references to 'config' to 'targetConfig'.
-            
-            Let's check 'Current Exam Title' display in the replacement 4 (lines 192-208 in my chunk logic).
-            
-            Visual Check:
-            - Replaced 'config.title' with 'targetConfig.title' in selector display. (Chunk 4) 👍
-            
-            Chunk 1: imports - Done
-            Chunk 2: Hook usage - Done
-            Chunk 3: maxPoints - Done
-            Chunk 4: runGrading - Done
-            Chunk 5: applyCorrection - Done
-            Chunk 6: Exam Selector Display - Done
-            Chunk 7: Modal Content (Add Draft option) - Done
-            Chunk 8: Modal Item (Update onPress and active check) - Done
-            
-            I think that covers it.
-        */}
+        {/* Modal for Manual Correction */}
+        <Modal
+          visible={!!correctionRow}
+          animationType="fade"
+          transparent={true}
+          onRequestClose={() => setCorrectionRow(null)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+               <View style={styles.modalHeader}>
+                  <Text style={styles.cardIcon}>✏️</Text>
+                  <Text style={styles.modalTitle} numberOfLines={1}>Correct {correctionRow?.label}</Text>
+               </View>
+               <Text style={styles.cardDescription}>
+                 Tap options to toggle them.
+               </Text>
+
+               <View style={styles.correctionOptions}>
+                 {correctionRow && Array.from({ length: correctionRow.optionsCount }).map((_, i) => {
+                    const isSelected = correctionRow.filled?.includes(i);
+                    const label = getOptionLabel(correctionRow.optionStyle as OptionStyle, i);
+                    return (
+                      <Pressable
+                        key={i}
+                        style={[styles.correctionOption, isSelected && styles.correctionOptionActive]}
+                        onPress={() => toggleCorrection(correctionRow.id, i)}
+                      >
+                         <Text style={[styles.correctionOptionText, isSelected && styles.correctionOptionTextActive]}>
+                           {label}
+                         </Text>
+                      </Pressable>
+                    );
+                 })}
+               </View>
+
+               <View style={styles.modalActions}>
+                 <Pressable
+                   style={[styles.modalButton, styles.modalButtonPrimary]}
+                   onPress={() => setCorrectionRow(null)}
+                 >
+                   <Text style={styles.modalButtonTextPrimary}>Done</Text>
+                 </Pressable>
+               </View>
+            </View>
+          </View>
+        </Modal>
+
         <View style={styles.glassCard}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardIcon}>📷</Text>
@@ -378,7 +417,7 @@ export default function GraderScreen() {
                 <View style={styles.resultInfo}>
                   <Text style={styles.resultLabel}>{row.label}</Text>
                   <Text style={styles.resultFilled}>
-                    Detected: {row.filled != null ? getOptionLabel(row.optionStyle as any, row.filled) : 'None'}
+                    Detected: {formatFilled(row)}
                   </Text>
                 </View>
                 <View style={styles.resultStatus}>
@@ -727,5 +766,62 @@ const styles = StyleSheet.create({
     color: Palette.neutral[400],
     textAlign: 'center',
     maxWidth: 280,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: Spacing.lg,
+  },
+  modalCard: {
+    backgroundColor: '#fff',
+    borderRadius: Radius.xl,
+    padding: Spacing.xl,
+    ...Shadows.lg,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalButtonPrimary: {
+    backgroundColor: Palette.primary.solid,
+  },
+  modalButtonTextPrimary: {
+    ...Typography.bodyBold,
+    color: '#fff',
+  },
+  correctionOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    marginBottom: Spacing.xl,
+  },
+  correctionOption: {
+    width: 50,
+    height: 50,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Palette.neutral[300],
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Palette.neutral[50],
+  },
+  correctionOptionActive: {
+    backgroundColor: Palette.success.bg,
+    borderColor: Palette.success.solid,
+  },
+  correctionOptionText: {
+    ...Typography.bodyBold,
+    color: Palette.neutral[600],
+  },
+  correctionOptionTextActive: {
+    color: Palette.success.dark,
   },
 });

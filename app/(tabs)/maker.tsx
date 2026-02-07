@@ -3,6 +3,7 @@ import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Burnt from 'burnt';
 import * as Haptics from 'expo-haptics';
+import * as FileSystem from 'expo-file-system';
 import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -76,7 +77,7 @@ export default function MakerScreen() {
           points: 5,
           optionsCount: 4,
           optionStyle: 'alphabet',
-          correctOption: null,
+          correctOptions: [],
         },
       ],
     }));
@@ -211,7 +212,7 @@ export default function MakerScreen() {
           if (!hit) return q;
           return {
             ...q,
-            correctOption: hit.filled,
+            correctOptions: hit.filled || [],
           };
         }),
       }));
@@ -238,12 +239,35 @@ export default function MakerScreen() {
     try {
       setIsExporting(true);
       const filePath = await generateExamPdf(config);
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(filePath);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } else {
-        Alert.alert('PDF created', filePath);
+
+      // Rename file to include title
+      const sanitizedTitle = (config.title || 'Exam').replace(/[^a-z0-9]/gi, '_').slice(0, 50);
+
+      // Access legacy cacheDirectory property which might be hidden in types
+      // @ts-ignore
+      const cacheDir = FileSystem.cacheDirectory || FileSystem.documentDirectory;
+      const newPath = cacheDir + sanitizedTitle + '.pdf';
+
+      try {
+        // @ts-ignore
+        await FileSystem.moveAsync({
+          from: filePath,
+          to: newPath
+        });
+
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(newPath);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } else {
+          Alert.alert('PDF created', newPath);
+        }
+      } catch (e) {
+        // Fallback if rename fails
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(filePath);
+        }
       }
+
     } catch (error) {
       Alert.alert('PDF export failed', String(error));
     } finally {
@@ -266,7 +290,7 @@ export default function MakerScreen() {
     setOptionCountDrafts((prev) => ({ ...prev, [questionId]: value }));
     const parsed = Number(value);
     if (Number.isFinite(parsed) && parsed >= 2) {
-      updateQuestion(questionId, { optionsCount: Math.floor(parsed), correctOption: null });
+      updateQuestion(questionId, { optionsCount: Math.floor(parsed), correctOptions: [] });
     }
   };
 
@@ -277,13 +301,25 @@ export default function MakerScreen() {
     }
     const parsed = Number(raw);
     if (!Number.isFinite(parsed) || parsed < 2) {
-      updateQuestion(questionId, { optionsCount: Math.max(2, currentValue ?? 4), correctOption: null });
+      updateQuestion(questionId, { optionsCount: Math.max(2, currentValue ?? 4), correctOptions: [] });
     }
     setOptionCountDrafts((prev) => {
       const next = { ...prev };
       delete next[questionId];
       return next;
     });
+  };
+
+  const toggleCorrectOption = (question: Question, index: number) => {
+    if (question.type !== 'mark') return;
+    const current = question.correctOptions || [];
+    let next: number[];
+    if (current.includes(index)) {
+      next = current.filter((i) => i !== index);
+    } else {
+      next = [...current, index].sort((a, b) => a - b);
+    }
+    updateQuestion(question.id, { correctOptions: next });
   };
 
   return (
@@ -624,7 +660,7 @@ export default function MakerScreen() {
                       type: 'mark',
                       optionsCount: q.optionsCount ?? 4,
                       optionStyle: q.optionStyle ?? 'alphabet',
-                      correctOption: q.type === 'mark' ? q.correctOption ?? null : null,
+                      correctOptions: q.type === 'mark' ? q.correctOptions ?? [] : [],
                     })
                   }
                 >
@@ -708,22 +744,25 @@ export default function MakerScreen() {
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Correct Answer</Text>
+                  <Text style={styles.inputLabel}>Correct Answers (Multi-select)</Text>
                   <View style={styles.answerRow}>
-                    {Array.from({ length: Math.max(2, q.optionsCount ?? 4) }).map((_, i) => (
-                      <Pressable
-                        key={`${q.id}_${i}`}
-                        style={[styles.answerChip, q.correctOption === i && styles.answerChipActive]}
-                        onPress={() => updateQuestion(q.id, { correctOption: i })}
-                      >
-                        <Text style={[styles.answerChipText, q.correctOption === i && styles.answerChipTextActive]}>
-                          {getOptionLabel(q.optionStyle ?? 'alphabet', i)}
-                        </Text>
-                      </Pressable>
-                    ))}
+                    {Array.from({ length: Math.max(2, q.optionsCount ?? 4) }).map((_, i) => {
+                      const isSelected = q.correctOptions?.includes(i);
+                      return (
+                        <Pressable
+                          key={`${q.id}_${i}`}
+                          style={[styles.answerChip, isSelected && styles.answerChipActive]}
+                          onPress={() => toggleCorrectOption(q, i)}
+                        >
+                          <Text style={[styles.answerChipText, isSelected && styles.answerChipTextActive]}>
+                            {getOptionLabel(q.optionStyle ?? 'alphabet', i)}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
                     <Pressable 
                       style={styles.clearAnswerChip} 
-                      onPress={() => updateQuestion(q.id, { correctOption: null })}
+                      onPress={() => updateQuestion(q.id, { correctOptions: [] })}
                     >
                       <Text style={styles.clearAnswerText}>Clear</Text>
                     </Pressable>
