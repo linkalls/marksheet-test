@@ -39,6 +39,7 @@ A powerful, AI-driven mobile application for creating, distributing, and grading
 
 ## 📚 Documentation
 
+- [**Quick Reference**](./docs/quick-reference.md): Fast lookup for common tasks and commands.
 - [**Setup Guide**](./docs/setup.md): Installation and API configuration.
 - [**Usage Guide**](./docs/usage.md): How to use Maker and Grader tools.
 - [**Architecture**](./docs/architecture.md): Tech stack and project structure.

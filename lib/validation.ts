@@ -204,7 +204,7 @@ export function validateFileType(mimeType: string, uri: string): boolean {
 export function sanitizeInput(input: string): string {
   return input
     .replace(/[<>]/g, '') // Remove angle brackets
-    .replace(/javascript:/gi, '') // Remove javascript: protocol
+    .replace(/(javascript|data|vbscript):/gi, '') // Remove dangerous URL schemes
     .trim();
 }
 
