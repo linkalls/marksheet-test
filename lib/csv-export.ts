@@ -18,6 +18,38 @@ export interface GradingResult {
 }
 
 /**
+ * Escape a value for safe CSV output
+ */
+function escapeCsvValue(value: string): string {
+  // Handle null/undefined
+  if (value == null) return '';
+  
+  const str = String(value);
+  
+  // If the value contains quotes, commas, newlines, or starts with special chars, 
+  // we need to escape it
+  const needsEscaping = 
+    str.includes('"') || 
+    str.includes(',') || 
+    str.includes('\n') || 
+    str.includes('\r') ||
+    str.startsWith('=') ||
+    str.startsWith('+') ||
+    str.startsWith('-') ||
+    str.startsWith('@');
+  
+  if (!needsEscaping) {
+    return str;
+  }
+  
+  // Double any quotes in the value
+  const escapedQuotes = str.replace(/"/g, '""');
+  
+  // Wrap in quotes
+  return `"${escapedQuotes}"`;
+}
+
+/**
  * Export grading results to CSV format
  */
 export async function exportGradingResultsToCSV(
@@ -28,7 +60,7 @@ export async function exportGradingResultsToCSV(
     throw new Error('No results to export');
   }
 
-  // Build CSV content
+  // Build CSV content with proper escaping
   const headers = [
     'Student',
     'Exam',
@@ -40,20 +72,22 @@ export async function exportGradingResultsToCSV(
   ];
   
   const rows = results.map(result => [
-    result.studentName || 'Unknown',
-    result.examTitle,
-    result.score.toString(),
-    result.totalPoints.toString(),
-    `${result.percentage.toFixed(1)}%`,
-    new Date(result.gradedAt).toLocaleString(),
-    result.questions
-      .map(q => `${q.label}: ${q.correct ? '✓' : '✗'}`)
-      .join('; '),
+    escapeCsvValue(result.studentName || 'Unknown'),
+    escapeCsvValue(result.examTitle),
+    escapeCsvValue(result.score.toString()),
+    escapeCsvValue(result.totalPoints.toString()),
+    escapeCsvValue(`${result.percentage.toFixed(1)}%`),
+    escapeCsvValue(new Date(result.gradedAt).toLocaleString()),
+    escapeCsvValue(
+      result.questions
+        .map(q => `${q.label}: ${q.correct ? '✓' : '✗'}`)
+        .join('; ')
+    ),
   ]);
 
   const csvContent = [
-    headers.join(','),
-    ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
+    headers.map(escapeCsvValue).join(','),
+    ...rows.map(row => row.join(',')),
   ].join('\n');
 
   // Save to file
@@ -85,7 +119,7 @@ export async function exportExamConfigToCSV(
   config: ExamConfig,
   filename?: string
 ): Promise<void> {
-  // Build CSV content
+  // Build CSV content with proper escaping
   const headers = [
     'Question #',
     'Label',
@@ -98,21 +132,21 @@ export async function exportExamConfigToCSV(
   ];
   
   const rows = config.questions.map((q, index) => [
-    (index + 1).toString(),
-    q.label,
-    q.type,
-    q.points.toString(),
-    q.optionsCount?.toString() || '',
-    q.optionStyle || '',
-    q.correctOptions?.join(', ') || '',
-    q.boxHeight || '',
+    escapeCsvValue((index + 1).toString()),
+    escapeCsvValue(q.label),
+    escapeCsvValue(q.type),
+    escapeCsvValue(q.points.toString()),
+    escapeCsvValue(q.optionsCount?.toString() || ''),
+    escapeCsvValue(q.optionStyle || ''),
+    escapeCsvValue(q.correctOptions?.join(', ') || ''),
+    escapeCsvValue(q.boxHeight || ''),
   ]);
 
   const csvContent = [
-    `Exam: ${config.title}`,
+    escapeCsvValue(`Exam: ${config.title}`),
     '',
-    headers.join(','),
-    ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
+    headers.map(escapeCsvValue).join(','),
+    ...rows.map(row => row.join(',')),
   ].join('\n');
 
   // Save to file

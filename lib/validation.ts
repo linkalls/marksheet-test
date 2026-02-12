@@ -149,9 +149,23 @@ export function validateAPIKey(apiKey: string): boolean {
     return false;
   }
   
-  // OpenAI API keys typically start with "sk-"
   const trimmedKey = apiKey.trim();
-  return trimmedKey.startsWith('sk-') && trimmedKey.length > 20;
+  
+  // OpenAI API keys typically start with "sk-" and can have different formats:
+  // - Legacy format: sk-... (48 chars)
+  // - Project format: sk-proj-... (longer, varies)
+  // Validate that it starts with sk- and has reasonable minimum length
+  if (!trimmedKey.startsWith('sk-')) {
+    return false;
+  }
+  
+  // Check for specific prefixes and their minimum expected lengths
+  if (trimmedKey.startsWith('sk-proj-')) {
+    return trimmedKey.length >= 56; // Project keys are longer
+  }
+  
+  // Legacy keys are typically 48-51 characters
+  return trimmedKey.length >= 40;
 }
 
 /**

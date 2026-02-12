@@ -20,8 +20,6 @@ export function AnalyticsSummary({ analytics, onViewDetails }: AnalyticsSummaryP
     );
   }
 
-  const averagePercentage = (analytics.averageScore / analytics.questionAnalytics.reduce((sum, q) => sum + (analytics.totalStudents > 0 ? 1 : 0), 0)) * 100;
-
   return (
     <View style={styles.container}>
       <LinearGradient
