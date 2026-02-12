@@ -15,6 +15,8 @@ import * as SecureStore from "expo-secure-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { STORAGE_KEYS, DEFAULT_SETTINGS } from "@/constants/keys";
 import { logger } from "@/lib/logger";
+import { withRetry, withRetryAndTimeout } from "@/lib/retry";
+import { validateAPIKey, validateFileSize, validateFileType } from "@/lib/validation";
 
 // --- Configuration Helper ---
 
@@ -36,6 +38,13 @@ async function getAppConfig() {
   if (!apiKey) {
     throw new Error(
       "API Key not configured. Please set it in Settings tab or use EXPO_PUBLIC_OPENAI_API_KEY.",
+    );
+  }
+
+  // Validate API key format
+  if (!validateAPIKey(apiKey)) {
+    throw new Error(
+      "Invalid API Key format. OpenAI API keys should start with 'sk-' and be at least 20 characters long.",
     );
   }
 
@@ -151,33 +160,41 @@ async function parseResponse<TSchema extends z.ZodTypeAny>(
     schemaName,
   });
 
-  try {
-    const response = await client.responses.parse({
-      model: model,
-      instructions,
-      input,
-      text: {
-        format: zodTextFormat(schema, schemaName),
+  // Wrap the API call with retry logic
+  return withRetryAndTimeout(
+    async () => {
+      const response = await client.responses.parse({
+        model: model,
+        instructions,
+        input,
+        text: {
+          format: zodTextFormat(schema, schemaName),
+        },
+      });
+
+      await logDebug("OpenAI Response Received", {
+        output_parsed: !!response.output_parsed,
+        refusal: (response as any).refusal,
+      });
+
+      if (!response.output_parsed) {
+        const errorMsg =
+          (response as any).refusal || "OpenAI response has no parsed output.";
+        await logDebug("OpenAI Parse Error/Refusal", errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      return response.output_parsed;
+    },
+    {
+      maxRetries: 3,
+      initialDelayMs: 1000,
+      onRetry: async (attempt, error) => {
+        await logDebug(`Retrying OpenAI call (attempt ${attempt})`, error);
       },
-    });
-
-    await logDebug("OpenAI Response Received", {
-      output_parsed: !!response.output_parsed,
-      refusal: (response as any).refusal,
-    });
-
-    if (!response.output_parsed) {
-      const errorMsg =
-        (response as any).refusal || "OpenAI response has no parsed output.";
-      await logDebug("OpenAI Parse Error/Refusal", errorMsg);
-      throw new Error(errorMsg);
-    }
-
-    return response.output_parsed;
-  } catch (e) {
-    await logDebug("OpenAI API Exception", e);
-    throw e;
-  }
+    },
+    90000 // 90 second timeout
+  );
 }
 
 function isImageMimeType(mimeType?: string | null): boolean {
@@ -186,6 +203,13 @@ function isImageMimeType(mimeType?: string | null): boolean {
 
 async function uploadFileToOpenAI(file: LocalInputFile): Promise<string> {
   const { apiKey } = await getAppConfig();
+
+  // Validate file type
+  if (!validateFileType(file.mimeType || '', file.uri)) {
+    throw new Error(
+      'Unsupported file type. Please upload a PDF, JPG, or PNG file.'
+    );
+  }
 
   await logDebug("Uploading file to OpenAI", {
     name: file.name,
@@ -209,24 +233,36 @@ async function uploadFileToOpenAI(file: LocalInputFile): Promise<string> {
   // Adjusted to use the apiKey returned from config directly
   if (!apiKey) throw new Error("API Key missing");
 
-  const response = await fetch("https://api.openai.com/v1/files", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
+  // Use retry logic for file upload
+  return withRetry(
+    async () => {
+      const response = await fetch("https://api.openai.com/v1/files", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`File upload failed: ${response.status} ${text}`);
+      }
+
+      const uploaded = (await response.json()) as { id?: string };
+      if (!uploaded.id) {
+        throw new Error("File upload response missing id.");
+      }
+      return uploaded.id;
     },
-    body: formData,
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`File upload failed: ${response.status} ${text}`);
-  }
-
-  const uploaded = (await response.json()) as { id?: string };
-  if (!uploaded.id) {
-    throw new Error("File upload response missing id.");
-  }
-  return uploaded.id;
+    {
+      maxRetries: 2,
+      initialDelayMs: 2000,
+      onRetry: async (attempt, error) => {
+        await logDebug(`Retrying file upload (attempt ${attempt})`, error);
+      },
+    }
+  );
 }
 
 async function createFileInputContent(

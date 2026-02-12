@@ -20,7 +20,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 
 export default function ExamsScreen() {
   const router = useRouter();
-  const { savedExams, loadSavedExam, deleteSavedExam } = useExam();
+  const { savedExams, loadSavedExam, deleteSavedExam, duplicateExam } = useExam();
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredExams = savedExams.filter((exam) =>
@@ -63,6 +63,17 @@ export default function ExamsScreen() {
         },
       ]
     );
+  };
+
+  const handleDuplicate = async (e: any, id: string, title: string) => {
+    e.stopPropagation();
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    await duplicateExam(id);
+    Burnt.toast({
+      title: 'Exam Duplicated',
+      message: `Created a copy of "${title}"`,
+      preset: 'done',
+    });
   };
 
   return (
@@ -121,17 +132,25 @@ export default function ExamsScreen() {
               <View style={styles.cardHeader}>
                 <View>
                   <Text style={styles.cardTitle}>{exam.config.title}</Text>
-                  <Text style={styles.cardDate}>Last modified: {new Date().toLocaleDateString()}</Text>
+                  <Text style={styles.cardDate}>Last modified: {new Date(exam.updatedAt).toLocaleDateString()}</Text>
                 </View>
-                <Pressable
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    handleDelete(exam.id, exam.config.title);
-                  }}
-                  hitSlop={10}
-                >
-                  <Text style={{ fontSize: 18, color: Palette.neutral[400] }}>🗑️</Text>
-                </Pressable>
+                <View style={styles.cardActions}>
+                  <Pressable
+                    onPress={(e) => handleDuplicate(e, exam.id, exam.config.title)}
+                    hitSlop={10}
+                  >
+                    <Text style={{ fontSize: 18, color: Palette.primary.solid }}>📋</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleDelete(exam.id, exam.config.title);
+                    }}
+                    hitSlop={10}
+                  >
+                    <Text style={{ fontSize: 18, color: Palette.neutral[400] }}>🗑️</Text>
+                  </Pressable>
+                </View>
               </View>
 
               <View style={styles.cardStats}>
@@ -223,6 +242,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: Spacing.md,
+  },
+  cardActions: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    alignItems: 'center',
   },
   cardTitle: {
     ...Typography.h3,

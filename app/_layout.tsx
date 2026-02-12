@@ -5,6 +5,7 @@ import 'react-native-reanimated';
 
 import { ExamProvider } from '@/context/exam-context';
 import { SettingsProvider } from '@/context/settings-context';
+import { GradingHistoryProvider } from '@/context/grading-history-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { DebugConsole } from '@/components/debug-console';
 
@@ -18,15 +19,17 @@ export default function RootLayout() {
   return (
     <SettingsProvider>
       <ExamProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-        </Stack>
-        <StatusBar style="auto" />
-        <DebugConsole />
-      </ThemeProvider>
-    </ExamProvider>
+        <GradingHistoryProvider>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+            </Stack>
+            <StatusBar style="auto" />
+            <DebugConsole />
+          </ThemeProvider>
+        </GradingHistoryProvider>
+      </ExamProvider>
     </SettingsProvider>
   );
 }
