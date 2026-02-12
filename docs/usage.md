@@ -2,7 +2,7 @@
 
 ## 📝 Exam Maker (Home Tab)
 
-The **Maker** tab is where you design your marksheet layout.
+The **Maker** tab is where you design your marksheet layout and manage saved exams.
 
 ### Creating an Exam
 
@@ -22,16 +22,25 @@ The **Maker** tab is where you design your marksheet layout.
    - **Export PDF**: Generates a printable marksheet PDF to share with students.
    - **New Exam**: Tap the `+ New` button in the header to clear the current draft.
 
+### Managing Saved Exams
+
+In the **My Exams** screen:
+- **Search**: Use the search bar to filter exams by title
+- **Load**: Tap an exam to load it into the editor
+- **Duplicate**: Tap the 📋 icon to create a copy of an exam
+- **Delete**: Tap the 🗑️ icon or long-press an exam card to delete it
+- **Export**: Export exam configuration to CSV for backup or sharing
+
 ## 📊 Grader (Explore Tab)
 
-The **Grader** tab allows you to score filled answer sheets using AI Vision.
+The **Grader** tab allows you to score filled answer sheets using AI Vision and track analytics.
 
 ### Grading Process
 
 1. **Select Exam**:
    - Tap the **"Current Exam"** card at the top.
    - Choose a saved exam from the list, or use the "Current Maker Draft".
-2. **Scan/Selected Answer Sheet**:
+2. **Scan/Select Answer Sheet**:
    - Tap **"Select answer sheet"** to upload a photo of a student's filled marksheet.
 3. **Run Grading**:
    - Tap **"👁️ Grade with AI Vision"**.
@@ -40,6 +49,25 @@ The **Grader** tab allows you to score filled answer sheets using AI Vision.
    - The score is displayed at the top.
    - Review individual questions.
    - **Manual Correction**: Tap any result row to manually override the detected answer if the AI made a mistake.
+5. **Save Results** (Optional):
+   - Grading results are automatically saved to history.
+   - View analytics and statistics for all graded exams.
+
+### Analytics Features
+
+After grading one or more answer sheets:
+- View **score distribution** across all students
+- See **average, highest, and lowest scores**
+- Identify **difficult questions** based on student performance
+- Track **grading history** over time
+
+### Exporting Results
+
+Export grading data for external analysis:
+1. Navigate to the graded exam
+2. Tap the **Export** button
+3. Choose **CSV format** for spreadsheet compatibility
+4. Share via email, cloud storage, or other apps
 
 ## ⚙️ Settings
 
