@@ -44,5 +44,108 @@ The **Grader** tab allows you to score filled answer sheets using AI Vision.
 ## ⚙️ Settings
 
 - **API Key**: Manage your OpenAI key safely.
-- **Model**: Switch models (e.g., `gpt-5-mini-2025-08-07`, `gpt-4o`).
-- **Debug Mode**: Enable verify detailed logs for troubleshooting.
+- **Model**: Switch models (e.g., `gpt-4o`, `gpt-4o-mini`).
+- **Debug Mode**: Enable to view detailed logs for troubleshooting.
+
+## 🎯 Advanced Workflows
+
+### Template Creation
+
+1. Create a base exam with common questions
+2. Save it with a descriptive name (e.g., "Weekly Quiz Template")
+3. Load it when creating new exams
+4. Modify specific questions as needed
+
+### Batch Grading Tips
+
+For grading multiple students efficiently:
+
+1. Prepare all answer sheets (scan/photo in advance)
+2. Select exam once in Grader tab
+3. Grade sheets one by one
+4. Use manual correction sparingly for speed
+
+### Question Duplication
+
+To reuse similar questions:
+
+1. Copy question text manually
+2. Add as new question in Maker
+3. Adjust differences (points, options, correct answers)
+
+## ⌨️ Keyboard Shortcuts
+
+When using web version or with external keyboard:
+
+- **Tab**: Navigate between input fields
+- **Enter**: Confirm/submit actions
+- **Esc**: Close modals/dialogs
+- **Ctrl/Cmd + S**: Quick save (in Maker tab)
+
+## 💡 Performance Tips
+
+- **Large Exams**: Keep under 100 questions for optimal performance
+- **Image Quality**: Use 300+ DPI scans for best AI accuracy
+- **Batch Operations**: Grade multiple students back-to-back in one session
+- **Storage**: Delete old exams you no longer need
+
+## 🎬 Video Tutorials
+
+_Coming soon: Step-by-step video guides for common workflows_
+
+## 📊 Understanding Results
+
+### Score Calculation
+
+- Each question shows points earned vs. total points
+- Total score is the sum of all correct answers
+- Percentage is calculated automatically
+
+### Manual Corrections
+
+If AI misreads an answer:
+
+1. Tap the result row
+2. Select the correct answer
+3. The score updates automatically
+4. Corrections are saved with the exam
+
+## 🔍 Tips for Better Accuracy
+
+### For Exam Generation:
+
+- Use clear, high-contrast source documents
+- Ensure consistent question numbering
+- Label answer options clearly (A, B, C, D or 1, 2, 3, 4)
+- Upload answer key image for auto-correction
+
+### For Grading:
+
+- Use dark pens or pencils for filling answers
+- Avoid stray marks or erasures
+- Keep answer sheets flat and well-lit
+- Ensure proper alignment when capturing images
+
+## 🚀 Quick Start Checklist
+
+**First Time Setup:**
+- [ ] Install dependencies (`bun install`)
+- [ ] Configure OpenAI API key in Settings
+- [ ] Test with sample exam creation
+- [ ] Try AI generation with a sample PDF
+- [ ] Practice grading with a test answer sheet
+
+**Creating Your First Exam:**
+- [ ] Navigate to Maker tab
+- [ ] Add questions (manual or AI-generated)
+- [ ] Set correct answers
+- [ ] Save the exam
+- [ ] Export PDF for distribution
+
+**Grading Process:**
+- [ ] Collect filled answer sheets
+- [ ] Select exam in Grader tab
+- [ ] Upload answer sheet images
+- [ ] Run AI grading
+- [ ] Review and correct if needed
+- [ ] Record final scores
