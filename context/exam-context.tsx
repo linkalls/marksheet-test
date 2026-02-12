@@ -21,6 +21,7 @@ interface ExamContextValue {
   saveCurrentConfig: (titleOverride?: string) => Promise<void>;
   loadSavedExam: (id: string) => void;
   deleteSavedExam: (id: string) => Promise<void>;
+  duplicateExam: (id: string) => Promise<void>;
   createNewExam: () => void;
   currentExamId: string | null;
   gradingConfig: ExamConfig | null;
@@ -135,6 +136,25 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
     await persistSavedExams(next);
   };
 
+  const duplicateExam = async (id: string) => {
+    const found = savedExams.find((item) => item.id === id);
+    if (!found) {
+      return;
+    }
+    const now = new Date().toISOString();
+    const newId = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const entry: SavedExam = {
+      id: newId,
+      createdAt: now,
+      updatedAt: now,
+      config: {
+        ...found.config,
+        title: `${found.config.title} (Copy)`,
+      },
+    };
+    await persistSavedExams([entry, ...savedExams]);
+  };
+
   const value = useMemo(
     () => ({
       config,
@@ -144,6 +164,7 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
       saveCurrentConfig,
       loadSavedExam,
       deleteSavedExam,
+      duplicateExam,
       createNewExam,
       currentExamId,
       gradingConfig,
