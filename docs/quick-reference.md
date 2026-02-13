@@ -37,9 +37,20 @@ EXPO_PUBLIC_OPENAI_API_KEY=sk-proj-...
 ```
 1. Tap "Maker" tab
 2. Tap "Add Mark" (multiple choice) or "Add Text" (written)
-3. Configure question settings
+3. Configure question settings:
+   - Label (e.g., Q1, Q2)
+   - Points value
+   - Option count (2-26 choices)
+   - Option style (A-Z, 1-26, kana, iroha)
+   - Correct answer(s)
 4. Tap "Save"
 ```
+
+**Option Styles Example:**
+- **Alphabet**: a, b, c, d, e, f ... z (up to 26 options)
+- **Number**: 1, 2, 3, 4, 5, 6 ... 26 (up to 26)
+- **Kana**: あ, い, う, え, お, か ... は (up to 26 characters)
+- **Iroha**: イ, ロ, ハ, ニ, ホ, ヘ ... ノ (up to 26 characters)
 
 ### AI Generation
 ```

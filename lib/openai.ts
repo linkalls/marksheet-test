@@ -78,7 +78,7 @@ const markQuestionSchema = z.object({
   label: z.string().min(1),
   points: z.number().int().min(0).default(0),
   type: z.literal("mark"),
-  optionsCount: z.number().int().min(2).max(10).default(4),
+  optionsCount: z.number().int().min(2).max(26).default(4),
   optionStyle: optionStyleSchema.default("alphabet"),
   correctOptions: z.array(z.number().int().min(0)).default([]),
 });
@@ -100,7 +100,7 @@ const examConfigSchema = z.object({
         label: z.string().min(1),
         points: z.number().int().min(0).default(0),
         type: questionTypeSchema,
-        optionsCount: z.number().int().min(2).max(10).nullable(),
+        optionsCount: z.number().int().min(2).max(26).nullable(),
         optionStyle: optionStyleSchema.nullable(),
         correctOptions: z.array(z.number().int().min(0)).nullable(),
         boxHeight: textBoxHeightSchema.nullable(),

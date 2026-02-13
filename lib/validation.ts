@@ -103,10 +103,10 @@ export function validateQuestion(question: Question, index: number): ValidationE
         field: `${prefix}.optionsCount`,
         message: `Question ${index + 1}: At least 2 options required for multiple choice`,
       });
-    } else if (question.optionsCount > 10) {
+    } else if (question.optionsCount > 26) {
       errors.push({
         field: `${prefix}.optionsCount`,
-        message: `Question ${index + 1}: Maximum 10 options allowed`,
+        message: `Question ${index + 1}: Maximum 26 options allowed`,
       });
     }
 
