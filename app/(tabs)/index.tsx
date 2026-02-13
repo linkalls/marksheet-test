@@ -130,8 +130,8 @@ export default function ExamsScreen() {
               onLongPress={() => handleDelete(exam.id, exam.config.title)}
             >
               <View style={styles.cardHeader}>
-                <View>
-                  <Text style={styles.cardTitle}>{exam.config.title}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cardTitle} numberOfLines={1}>{exam.config.title}</Text>
                   <Text style={styles.cardDate}>Last modified: {new Date(exam.updatedAt).toLocaleDateString()}</Text>
                 </View>
                 <View style={styles.cardActions}>
@@ -252,6 +252,7 @@ const styles = StyleSheet.create({
     ...Typography.h3,
     color: Palette.neutral[900],
     marginBottom: 2,
+    flexShrink: 1,
   },
   cardDate: {
     ...Typography.caption,
