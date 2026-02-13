@@ -185,7 +185,7 @@ Legend:
 ## Known Limitations
 
 ### Current Constraints
-1. **Option Count**: Maximum 10 options per question (sufficient for most use cases)
+1. **Option Count**: Maximum 26 options per question (A-Z for alphabet style)
 2. **Question Count**: Recommended maximum 100 questions per exam (performance)
 3. **File Size**: 20MB limit for uploads (OpenAI API limit)
 4. **Single Page**: Currently only single-page exams supported

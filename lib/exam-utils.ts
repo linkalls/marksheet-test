@@ -19,11 +19,19 @@ export function getOptionLabel(style: OptionStyle, index: number): string {
     case "alphabet":
       return String.fromCharCode(97 + index);
     case "kana": {
-      const list = ["あ", "い", "う", "え", "お", "か", "き", "く", "け", "こ"];
+      const list = [
+        "あ", "い", "う", "え", "お", "か", "き", "く", "け", "こ",
+        "さ", "し", "す", "せ", "そ", "た", "ち", "つ", "て", "と",
+        "な", "に", "ぬ", "ね", "の", "は"
+      ];
       return list[index] ?? `k${index + 1}`;
     }
     case "iroha": {
-      const list = ["イ", "ロ", "ハ", "ニ", "ホ", "ヘ", "ト", "チ", "リ", "ヌ"];
+      const list = [
+        "イ", "ロ", "ハ", "ニ", "ホ", "ヘ", "ト", "チ", "リ", "ヌ",
+        "ル", "ヲ", "ワ", "カ", "ヨ", "タ", "レ", "ソ", "ツ", "ネ",
+        "ナ", "ラ", "ム", "ウ", "ヰ", "ノ"
+      ];
       return list[index] ?? `i${index + 1}`;
     }
     default:

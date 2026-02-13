@@ -50,8 +50,24 @@ export function buildExamPdfSchema(config: ExamConfig): ExamPdfSchema {
 
     if (question.type === 'mark') {
       const options = question.optionsCount ?? 4;
+      
+      // Calculate spacing based on number of options to fit on page
+      // Page width is 210mm, usable width ~180mm (210 - 30 for margins)
+      // Start at x=70, so we have ~125mm available
+      const availableWidth = 125;
+      const spacing = options <= 10 ? 15 : Math.min(15, availableWidth / options);
+      
       for (let idx = 0; idx < options; idx += 1) {
-        elements.push({ type: 'rect', x: 70 + idx * 15, y: y - 4, width: 6, height: 6 });
+        const x = 70 + idx * spacing;
+        
+        // If options would overflow, wrap to next line
+        if (x > 190) {
+          y += 10;
+          const wrappedIdx = idx % Math.floor(availableWidth / spacing);
+          elements.push({ type: 'rect', x: 70 + wrappedIdx * spacing, y: y - 4, width: 6, height: 6 });
+        } else {
+          elements.push({ type: 'rect', x, y: y - 4, width: 6, height: 6 });
+        }
       }
       y += 10;
       continue;

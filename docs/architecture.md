@@ -77,7 +77,7 @@ PDF generation using `@pdfme/generator`.
 Utility functions for exam operations.
 
 - ID generation for questions
-- Option label conversion (A-J, 1-10, kana, iroha)
+- Option label conversion (A-Z, 1-26, kana, iroha)
 - Validation helpers
 
 ## Data Flow

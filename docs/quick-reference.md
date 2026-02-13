@@ -40,17 +40,17 @@ EXPO_PUBLIC_OPENAI_API_KEY=sk-proj-...
 3. Configure question settings:
    - Label (e.g., Q1, Q2)
    - Points value
-   - Option count (2-10 choices)
-   - Option style (A-J, 1-10, kana, iroha)
+   - Option count (2-26 choices)
+   - Option style (A-Z, 1-26, kana, iroha)
    - Correct answer(s)
 4. Tap "Save"
 ```
 
 **Option Styles Example:**
-- **Alphabet**: a, b, c, d, e, f (up to j for 10 options)
-- **Number**: 1, 2, 3, 4, 5, 6 (up to 10)
-- **Kana**: あ, い, う, え, お, か (up to 10 characters)
-- **Iroha**: イ, ロ, ハ, ニ, ホ, ヘ (up to 10 characters)
+- **Alphabet**: a, b, c, d, e, f ... z (up to 26 options)
+- **Number**: 1, 2, 3, 4, 5, 6 ... 26 (up to 26)
+- **Kana**: あ, い, う, え, お, か ... は (up to 26 characters)
+- **Iroha**: イ, ロ, ハ, ニ, ホ, ヘ ... ノ (up to 26 characters)
 
 ### AI Generation
 ```

@@ -7,9 +7,9 @@ A powerful, AI-driven mobile application for creating, distributing, and grading
 ### Core Features
 - **🤖 AI Exam Maker**: Generate exam configurations instantly from PDFs or images using OpenAI Vision.
   - Supports simultaneous "Question" and "Answer Key" upload for auto-correction setup.
-  - Handles complex question formats (e.g., "A to F", "1~6").
-  - Supports multiple answer formats: alphabet (A-F), numbers (1-6), Japanese kana, and iroha.
-  - Configurable option count: 2-10 choices per question.
+  - Handles complex question formats (e.g., "A to Z", "1~26").
+  - Supports multiple answer formats: alphabet (A-Z), numbers (1-26), Japanese kana, and iroha.
+  - Configurable option count: 2-26 choices per question.
 - **📄 PDF Export**: Generate printable marksheet PDFs directly from the app.
 - **📷 AI Vision Grader**: Scan filled answer sheets with your camera or imports to grade them instantly.
   - Automatic grading with AI vision technology.
@@ -78,7 +78,7 @@ See [OpenAI Pricing](https://openai.com/pricing) for current rates.
 - Best results with clear, high-contrast scanned answer sheets.
 - Maximum recommended: 100 questions per exam for optimal performance.
 - Currently supports single-page exams only.
-- Maximum 10 options per multiple-choice question.
+- Maximum 26 options per multiple-choice question.
 
 ## 📱 Screenshots
 
