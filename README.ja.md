@@ -47,6 +47,7 @@
 - [**トラブルシューティング**](./docs/troubleshooting.md): よくある問題と解決方法。
 - [**プライバシーとセキュリティ**](./docs/privacy-security.md): データプライバシーとセキュリティに関する考慮事項。
 - [**商用デプロイメント**](./docs/commercial-deployment.md): 機関や商用利用のためのガイド。
+- [**機能ロードマップ**](./docs/feature-roadmap.md): 現在の機能と今後の計画。
 - [**貢献ガイド**](./CONTRIBUTING.md): プロジェクトへの貢献ガイドライン。
 
 ## 💰 コスト見積もり

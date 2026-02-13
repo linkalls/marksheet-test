@@ -47,6 +47,7 @@ A powerful, AI-driven mobile application for creating, distributing, and grading
 - [**Troubleshooting**](./docs/troubleshooting.md): Common issues and solutions.
 - [**Privacy & Security**](./docs/privacy-security.md): Data privacy and security considerations.
 - [**Commercial Deployment**](./docs/commercial-deployment.md): Guide for institutional and commercial use.
+- [**Feature Roadmap**](./docs/feature-roadmap.md): Current features and future plans.
 - [**Contributing**](./CONTRIBUTING.md): Guidelines for contributing to the project.
 
 ## 💰 Cost Estimation
