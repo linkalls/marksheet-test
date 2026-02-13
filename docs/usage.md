@@ -7,7 +7,7 @@ The **Maker** tab is where you design your marksheet layout and manage saved exa
 ### Creating an Exam
 
 1. **Manual Creation**:
-   - Tap **"Add Mark"** to add multiple-choice questions (e.g., A-D, 1-4).
+   - Tap **"Add Mark"** to add multiple-choice questions (e.g., A-F, 1-6, up to 10 options).
    - Tap **"Add Text"** to add written answer boxes.
    - Edit labels, points, and correct options directly on the card.
 
